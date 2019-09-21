@@ -44,6 +44,11 @@ class HelloWorld { // The window handle
     // Create the window
     window = glfwCreateWindow(1000, 1000, "Hello World!", NULL, NULL)
     if (window == NULL) throw new RuntimeException("Failed to create the GLFW window")
+//    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE)
+    glfwSetFramebufferSizeCallback(window, (window, width, height)=>{
+      glViewport(0, 0, width, height) // render canvas size update
+    })
+
     // Setup a key callback. It will be called every time a key is pressed, repeated or released.
     glfwSetKeyCallback(window, (window: Long, key: Int, scancode: Int, action: Int, mods: Int) => {
       def foo(window: Long, key: Int, scancode: Int, action: Int, mods: Int) = {
@@ -51,10 +56,10 @@ class HelloWorld { // The window handle
           println(s"keyboardInput: ${(key, mods)}")
         if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) glfwSetWindowShouldClose(window, true) // We will detect this in the rendering loop
       }
-
       foo(window, key, scancode, action, mods)
     })
     glfwSetJoystickCallback((jid: Int, event: Int)=>{ println(s"joyStickInput: ${(jid, event)}") })
+
 
     // Get the thread stack and push a new frame
 //    try {
@@ -94,12 +99,12 @@ class HelloWorld { // The window handle
     while ( {
       !glfwWindowShouldClose(window)
     }) {
-      val controller = new IIDXController()
-      if (controller.isAnyKeyPressed)
-        println(controller)
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) // clear the framebuffer
 
+
       keyRenderer()
+
+
       glfwSwapBuffers(window) // swap the color buffers
 
       // Poll for window events. The key callback above will only be
@@ -108,19 +113,20 @@ class HelloWorld { // The window handle
 
 
       def keyRenderer(): Unit ={
-        val leftEdge = -1.0
-        val rightEdge = 1.0
+        val controller = new IIDXController()
+        val leftEdge = -0.8
+        val rightEdge = 0.8
         val topEdge = 1.0
         val bottomEdge = -1.0
         val width = rightEdge - leftEdge
         val height = topEdge - bottomEdge
 
-
         val keyWidth: Double = width / 7.0
         controller.keys.zipWithIndex
           .foreach{case (keyIsPressed, index) =>{
-            val left = keyWidth * index -1
-            val right = keyWidth * (index+1) -1
+            val leftSpace = (1 + leftEdge)
+            val left = keyWidth * index -1 + leftSpace
+            val right = keyWidth * (index+1) -1 + leftSpace
             val top = topEdge
             val bottom = bottomEdge
             if (keyIsPressed) glColor3f(1.0f, 0.5f, 1.0f)
@@ -132,33 +138,6 @@ class HelloWorld { // The window handle
             glVertex2d(right, bottom)
             glEnd()
           }}
-      }
-
-
-
-
-      def render(leftPos: Double, rightPos: Double): Unit ={
-
-        glColor3f(0.5f, 0.5f, 1.0f)
-
-
-        // draw quad
-        glBegin(GL_QUADS)
-        glVertex2d(0.5, 0.5)
-        glVertex2d(-0.5, 0.5)
-        glVertex2d(-0.5, -0.5)
-        glVertex2d(0.5, -0.5)
-        glEnd()
-//        //  次に指定する４つの座標を、描く四角形の頂点として認識させる//  次に指定する４つの座標を、描く四角形の頂点として認識させる
-//        glBegin(GL_QUADS)
-//        glVertex3f(width - 50, height - 50, 0) //   1 つめの頂点の座標を指定する
-//        glVertex3f(50, height - 50, 0) //  2 つめの頂点の座標を指定する
-//        glVertex3f(50, 50, 0) // 3 つめの頂点の座標を指定する
-//        glVertex3f(width - 50, 50, 0) // 4 つめの頂点の座標を指定する
-//        //  四角形の表示おしまい
-//        glEnd()
-//        glColor3f(1.0f, 0.5f, 0.5f);            //  次に指定する座標に RGB で色を設定する
-//        glVertex3f(width - 50, height- 50, 0);  //  座標を指定する
       }
     }
   }
