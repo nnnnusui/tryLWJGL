@@ -42,7 +42,7 @@ class HelloWorld { // The window handle
     glfwPollEvents()
 
     // Create the window
-    window = glfwCreateWindow(300, 300, "Hello World!", NULL, NULL)
+    window = glfwCreateWindow(1000, 1000, "Hello World!", NULL, NULL)
     if (window == NULL) throw new RuntimeException("Failed to create the GLFW window")
     // Setup a key callback. It will be called every time a key is pressed, repeated or released.
     glfwSetKeyCallback(window, (window: Long, key: Int, scancode: Int, action: Int, mods: Int) => {
@@ -86,22 +86,100 @@ class HelloWorld { // The window handle
     // bindings available for use.
     GL.createCapabilities
     // Set the clear color
-    glClearColor(1.0f, 0.0f, 0.0f, 0.0f)
+    glClearColor(1.0f, 1.0f, 1.0f, 0.0f)
     // Run the rendering loop until the user has attempted to close
     // the window or has pressed the ESCAPE key.
     println(glfwGetJoystickName(GLFW_JOYSTICK_1))
+    println(glfwGetJoystickButtons(GLFW_JOYSTICK_1).capacity())
     while ( {
-
-      println(glfwGetJoystickButtons(GLFW_JOYSTICK_1).get())
       !glfwWindowShouldClose(window)
     }) {
+      val controller = new IIDXController()
+      if (controller.isAnyKeyPressed)
+        println(controller)
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) // clear the framebuffer
 
+      keyRenderer()
       glfwSwapBuffers(window) // swap the color buffers
 
       // Poll for window events. The key callback above will only be
       // invoked during this call.
       glfwPollEvents()
+
+
+      def keyRenderer(): Unit ={
+        val leftEdge = -1.0
+        val rightEdge = 1.0
+        val topEdge = 1.0
+        val bottomEdge = -1.0
+        val width = rightEdge - leftEdge
+        val height = topEdge - bottomEdge
+
+
+        val keyWidth: Double = width / 7.0
+        controller.keys.zipWithIndex
+          .foreach{case (keyIsPressed, index) =>{
+            val left = keyWidth * index -1
+            val right = keyWidth * (index+1) -1
+            val top = topEdge
+            val bottom = bottomEdge
+            if (keyIsPressed) glColor3f(1.0f, 0.5f, 1.0f)
+            else              glColor3f(0.5f, 0.5f, 1.0f)
+            glBegin(GL_QUADS)
+            glVertex2d(right, top)
+            glVertex2d(left, top)
+            glVertex2d(left, bottom)
+            glVertex2d(right, bottom)
+            glEnd()
+          }}
+      }
+
+
+
+
+      def render(leftPos: Double, rightPos: Double): Unit ={
+
+        glColor3f(0.5f, 0.5f, 1.0f)
+
+
+        // draw quad
+        glBegin(GL_QUADS)
+        glVertex2d(0.5, 0.5)
+        glVertex2d(-0.5, 0.5)
+        glVertex2d(-0.5, -0.5)
+        glVertex2d(0.5, -0.5)
+        glEnd()
+//        //  次に指定する４つの座標を、描く四角形の頂点として認識させる//  次に指定する４つの座標を、描く四角形の頂点として認識させる
+//        glBegin(GL_QUADS)
+//        glVertex3f(width - 50, height - 50, 0) //   1 つめの頂点の座標を指定する
+//        glVertex3f(50, height - 50, 0) //  2 つめの頂点の座標を指定する
+//        glVertex3f(50, 50, 0) // 3 つめの頂点の座標を指定する
+//        glVertex3f(width - 50, 50, 0) // 4 つめの頂点の座標を指定する
+//        //  四角形の表示おしまい
+//        glEnd()
+//        glColor3f(1.0f, 0.5f, 0.5f);            //  次に指定する座標に RGB で色を設定する
+//        glVertex3f(width - 50, height- 50, 0);  //  座標を指定する
+      }
     }
   }
+}
+
+
+class IIDXController(
+                      val buttons: ByteBuffer = glfwGetJoystickButtons(GLFW_JOYSTICK_1)
+                    ){
+  def isPressed(keyNumber: Int): Boolean
+      = buttons.get(keyNumber) == 1
+
+  val key1 = isPressed(0)
+  val key2 = isPressed(1)
+  val key3 = isPressed(2)
+  val key4 = isPressed(3)
+  val key5 = isPressed(4)
+  val key6 = isPressed(5)
+  val key7 = isPressed(6)
+  val keys = Array(key1, key2, key3, key4, key5, key6, key7)
+  val isAnyKeyPressed = (key1 || key2 || key3 || key4 || key5 || key6 || key7)
+
+  override def toString: String = s"$key1 $key2 $key3 $key4 $key5 $key6 $key7"
 }
