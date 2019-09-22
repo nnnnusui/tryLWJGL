@@ -96,24 +96,26 @@ class HelloWorld { // The window handle
     // the window or has pressed the ESCAPE key.
     println(glfwGetJoystickName(GLFW_JOYSTICK_1))
     println(glfwGetJoystickButtons(GLFW_JOYSTICK_1).capacity())
+
+    var disc: Float = 0F
     while ( {
       !glfwWindowShouldClose(window)
     }) {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) // clear the framebuffer
 
 
+      val controller = new IIDXController()
       keyRenderer()
 
 
       glfwSwapBuffers(window) // swap the color buffers
-
       // Poll for window events. The key callback above will only be
       // invoked during this call.
       glfwPollEvents()
 
-
+      def discIsTurned(): Boolean
+          = disc != controller.disc
       def keyRenderer(): Unit ={
-        val controller = new IIDXController()
         val leftEdge = -0.8
         val rightEdge = 0.8
         val topEdge = 1.0
@@ -121,9 +123,9 @@ class HelloWorld { // The window handle
         val width = rightEdge - leftEdge
         val height = topEdge - bottomEdge
 
-        val keyWidth: Double = width / 7.0
-        controller.keys.zipWithIndex
-          .foreach{case (keyIsPressed, index) =>{
+        val keys = (discIsTurned() :: controller.keys)
+        val keyWidth: Double = width / keys.size
+        keys.zipWithIndex.foreach{case (keyIsPressed, index) =>{
             val leftSpace = (1 + leftEdge)
             val left = keyWidth * index -1 + leftSpace
             val right = keyWidth * (index+1) -1 + leftSpace
@@ -138,6 +140,7 @@ class HelloWorld { // The window handle
             glVertex2d(right, bottom)
             glEnd()
           }}
+        disc = controller.disc
       }
     }
   }
@@ -146,6 +149,7 @@ class HelloWorld { // The window handle
 
 class IIDXController(
                       val buttons: ByteBuffer = glfwGetJoystickButtons(GLFW_JOYSTICK_1)
+                     ,val axes: FloatBuffer = glfwGetJoystickAxes(GLFW_JOYSTICK_1)
                     ){
   def isPressed(keyNumber: Int): Boolean
       = buttons.get(keyNumber) == 1
@@ -157,8 +161,10 @@ class IIDXController(
   val key5 = isPressed(4)
   val key6 = isPressed(5)
   val key7 = isPressed(6)
-  val keys = Array(key1, key2, key3, key4, key5, key6, key7)
+  val keys = List(key1, key2, key3, key4, key5, key6, key7)
   val isAnyKeyPressed = (key1 || key2 || key3 || key4 || key5 || key6 || key7)
 
-  override def toString: String = s"$key1 $key2 $key3 $key4 $key5 $key6 $key7"
+  val disc = axes.get(0)
+
+  override def toString: String = s"$disc $key1 $key2 $key3 $key4 $key5 $key6 $key7"
 }
